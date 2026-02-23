@@ -30,7 +30,7 @@
   .stat-value{font-size:28px;font-weight:800;font-family:'DM Mono',monospace;line-height:1;}
   .stat-value.orange{color:var(--on-break);}.stat-value.green{color:var(--done);}.stat-value.plain{color:var(--text);}
   .info-bar{background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.18);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--done);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-  .setup-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;}
+  .setup-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:flex;flex-direction:column;gap:0;}
   .setup-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
   .setup-title::after{content:'▼';font-size:9px;transition:transform 0.2s;}
   .setup-title.collapsed::after{transform:rotate(-90deg);}
@@ -52,9 +52,9 @@
   @keyframes pulse-row{0%,100%{background:var(--on-break-bg);}50%{background:rgba(255,107,53,0.18);}}
   .agent-header{display:flex;align-items:center;gap:10px;padding:10px 16px 5px 16px;flex-wrap:wrap;}
   .agent-row-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:20px;}
-  select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:5px 26px 5px 9px;outline:none;cursor:pointer;width:88px;transition:border-color 0.2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%236b7080'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+  select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:5px 22px 5px 7px;outline:none;cursor:pointer;width:78px;transition:border-color 0.2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%236b7080'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;}
   select:focus{border-color:var(--accent);}
-  select.agent-select{font-family:'Syne',sans-serif;font-size:12px;font-weight:600;width:200px;}
+  select.agent-select{font-family:'Syne',sans-serif;font-size:12px;font-weight:600;width:170px;}
   .break-progress-wrap{display:flex;align-items:center;gap:8px;flex:1;min-width:140px;}
   .break-bar-bg{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;min-width:60px;}
   .break-bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease;background:linear-gradient(90deg,var(--accent),var(--accent2));}
@@ -86,6 +86,22 @@
   .sync-dot.syncing{background:var(--warning);animation:blink 0.6s infinite;}
   .sync-dot.err{background:var(--on-break);}
   ::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:var(--surface);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .avail-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px;}
+  .avail-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .avail-title-left{display:flex;align-items:center;gap:8px;}
+  .avail-legend{display:flex;align-items:center;gap:12px;font-size:10px;font-family:'DM Mono',monospace;}
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .legend-dot{width:10px;height:10px;border-radius:3px;}
+  .avail-grid{display:flex;flex-wrap:wrap;gap:4px;}
+  .avail-slot{font-family:'DM Mono',monospace;font-size:10px;padding:4px 7px;border-radius:5px;border:1px solid transparent;cursor:default;white-space:nowrap;transition:opacity 0.2s;}
+  .avail-free{background:rgba(34,197,94,0.13);border-color:rgba(34,197,94,0.28);color:var(--done);}
+  .avail-one{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.28);color:var(--warning);}
+  .avail-full{background:rgba(255,107,53,0.10);border-color:rgba(255,107,53,0.22);color:rgba(255,107,53,0.6);text-decoration:line-through;}
+  .avail-past{background:rgba(107,112,128,0.07);border-color:rgba(107,112,128,0.15);color:rgba(107,112,128,0.4);}
+  .avail-count{font-size:8px;opacity:0.75;margin-left:2px;}
+  .avail-now-marker{position:relative;}
+  .avail-now-marker::after{content:'NOW';position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:700;color:var(--kyiv);letter-spacing:0.5px;font-family:'DM Mono',monospace;}
+
 </style>
 </head>
 <body>
@@ -104,6 +120,17 @@
 </header>
 
 <div class="main">
+  <div class="avail-panel" id="avail-panel">
+    <div class="avail-title">
+      <div class="avail-title-left">🕐 Available Break Slots <span style="color:var(--muted);font-weight:400;letter-spacing:0;text-transform:none;font-size:10px;">— slots where fewer than 2 agents are scheduled (current shift only)</span></div>
+      <div class="avail-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(34,197,94,0.25);border:1px solid rgba(34,197,94,0.4);"></div><span style="color:var(--done)">Open</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);"></div><span style="color:var(--warning)">1 taken</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,107,53,0.15);border:1px solid rgba(255,107,53,0.3);"></div><span style="color:var(--on-break)">Full</span></div>
+      </div>
+    </div>
+    <div class="avail-grid" id="avail-grid"></div>
+  </div>
   <div class="stats">
     <div class="stat-card"><div class="stat-label">On Break Now</div><div class="stat-value orange" id="stat-on-break">0</div></div>
     <div class="stat-card"><div class="stat-label">Breaks Finished</div><div class="stat-value green" id="stat-done">0</div></div>
@@ -113,16 +140,25 @@
   <div class="info-bar">🌐 Real-time sync active — changes made by anyone appear for everyone instantly.</div>
   <div class="overlap-banner" id="overlap-banner">⚠️ <span id="overlap-msg"></span></div>
   <div class="setup-panel">
-    <div class="setup-title collapsed" id="setup-toggle">Agent Setup</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="setup-title collapsed" id="setup-toggle" style="flex:1;">Agent Setup</div>
+    <button onclick="clearAll()" style="border:1px solid rgba(255,107,53,0.4);border-radius:7px;background:rgba(255,107,53,0.08);color:var(--on-break);cursor:pointer;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;padding:6px 16px;transition:all 0.18s;white-space:nowrap;" onmouseover="this.style.background='rgba(255,107,53,0.18)'" onmouseout="this.style.background='rgba(255,107,53,0.08)'">⚠ Clear All Rows</button>
+  </div>
     <div class="setup-content hidden" id="setup-content">
       <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Edit agent names here. Changes sync live for everyone.</p>
       <div class="agents-grid" id="agents-grid"></div>
       <div class="setup-actions"><button class="btn" onclick="saveAgents()">Save &amp; Apply</button></div>
     </div>
   </div>
-  <div class="table-wrap">
-    <div class="table-header">Agent Rows · Up to 3 break slots · Max 60 min total · Auto-detected from Kyiv time</div>
-    <div id="break-table"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="table-wrap">
+      <div class="table-header">Rows 1–5 · Up to 3 break slots · Max 60 min</div>
+      <div id="break-table-left"></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header">Rows 6–10 · Up to 3 break slots · Max 60 min</div>
+      <div id="break-table-right"></div>
+    </div>
   </div>
   <div style="font-size:11px;color:var(--muted);margin-top:8px;">No breaks in last 30 min of shift · Max 2 concurrent · 60 min total per agent</div>
 </div>
@@ -307,11 +343,76 @@ function getBlockedFromTimes(excludeRi,excludeSi){
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  RENDER
+//  AVAILABLE SLOTS PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderAvailableSlots(){
+  var grid=document.getElementById('avail-grid');if(!grid)return;
+  // Determine shift window
+  var h=kyivHour();
+  var shiftStart,shiftEnd;
+  if(h>=7&&h<15){shiftStart=7*60;shiftEnd=14*60+30;}
+  else if(h>=15&&h<23){shiftStart=15*60;shiftEnd=22*60+30;}
+  else{shiftStart=23*60;shiftEnd=6*60+30;}// overnight
+  var nowM=kyivNowMins();
+  // Count how many agents have a break overlapping each 15-min slot
+  var slotCounts={};
+  ALL_TIMES.forEach(function(t){slotCounts[t]=0;});
+  rows.forEach(function(row){
+    if(row.agentIdx<0)return;
+    row.slots.forEach(function(s){
+      if(!s.from||!s.to||s.from===s.to)return;
+      var sFrom=toMins(s.from),sTo=toMins(s.to);
+      ALL_TIMES.forEach(function(t){
+        var tM=toMins(t);
+        var inSlot;
+        if(sTo<sFrom){inSlot=tM>=sFrom||tM<sTo;}
+        else{inSlot=tM>=sFrom&&tM<sTo;}
+        if(inSlot)slotCounts[t]++;
+      });
+    });
+  });
+  // Filter to shift window slots (excluding last 30 min = cutoff)
+  var slots=ALL_TIMES.filter(function(t){
+    var tM=toMins(t);
+    if(shiftStart<shiftEnd){return tM>=shiftStart&&tM<shiftEnd;}
+    else{return tM>=shiftStart||tM<shiftEnd;}// overnight
+  });
+  grid.innerHTML='';
+  var nowSlot=ALL_TIMES.reduce(function(best,t){
+    var tM=toMins(t);if(tM<=nowM)return t;return best;
+  },ALL_TIMES[0]);
+  slots.forEach(function(t){
+    var count=slotCounts[t]||0;
+    var tM=toMins(t);
+    var isPast=(shiftStart<shiftEnd)?(tM<nowM-15):(tM+1440-shiftStart<nowM+1440-shiftStart-15);
+    // simpler past check:
+    var pastCheck;
+    if(shiftStart<shiftEnd){pastCheck=tM<nowM-14;}
+    else{var norm=tM>=shiftStart?tM-shiftStart:tM+1440-shiftStart;var normNow=nowM>=shiftStart?nowM-shiftStart:nowM+1440-shiftStart;pastCheck=norm<normNow-14;}
+    var isNow=(t===nowSlot);
+    var cls='avail-slot ';
+    if(pastCheck)cls+='avail-past';
+    else if(count>=2)cls+='avail-full';
+    else if(count===1)cls+='avail-one';
+    else cls+='avail-free';
+    if(isNow)cls+=' avail-now-marker';
+    var countBadge=(!pastCheck&&count>0)?'<span class="avail-count">'+count+'/2</span>':'';
+    var div=document.createElement('div');
+    div.className=cls;
+    div.title=t+' — '+count+' of 2 slots taken';
+    div.innerHTML=t+countBadge;
+    grid.appendChild(div);
+  });
+}
+
+
 // ═══════════════════════════════════════════════════════════════
 function render(){
-  var tbody=document.getElementById('break-table');if(!tbody)return;
-  tbody.innerHTML='';var onBreakCount=countOnBreakNow();
+  var left=document.getElementById('break-table-left');
+  var right=document.getElementById('break-table-right');
+  if(!left||!right)return;
+  left.innerHTML='';right.innerHTML='';
+  var onBreakCount=countOnBreakNow();
   rows.forEach(function(row,ri){
     var used=rowUsedMins(row);
     var pct=Math.min(100,(used/MAX_BREAK)*100);
@@ -331,7 +432,8 @@ function render(){
         '</div>'+
       '</div>'+
       '<div class="break-slots" id="slots-'+ri+'"></div>';
-    tbody.appendChild(wrap);
+    var container=ri<5?left:right;
+    container.appendChild(wrap);
     var slotsDiv=wrap.querySelector('#slots-'+ri);
     row.slots.forEach(function(slot,si){
       var status=slotStatus(slot),dur=slotDur(slot),canClear=slot.from||slot.to;
@@ -356,7 +458,7 @@ function render(){
       slotsDiv.appendChild(sd);
     });
   });
-  updateStats(onBreakCount);checkOverlap(onBreakCount);
+  updateStats(onBreakCount);checkOverlap(onBreakCount);renderAvailableSlots();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -376,6 +478,13 @@ function setFrom(ri,si,v){
 }
 function setTo(ri,si,v){rows[ri].slots[si].to=v;pushRows();render();}
 function clearSlot(ri,si){rows[ri].slots[si]={from:'',to:''};pushRows();render();}
+function clearAll(){
+  for(var i=0;i<rows.length;i++){
+    rows[i].agentIdx=-1;
+    rows[i].slots=[{from:'',to:''},{from:'',to:''},{from:'',to:''}];
+  }
+  pushRows();render();
+}
 function clearRow(ri){rows[ri].agentIdx=-1;rows[ri].slots=[{from:'',to:''},{from:'',to:''},{from:'',to:''}];pushRows();render();}
 
 // ═══════════════════════════════════════════════════════════════
