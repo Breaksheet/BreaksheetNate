@@ -57,6 +57,7 @@
   select.agent-select{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;width:170px;}
   .agent-dropdown{position:relative;width:170px;user-select:none;}
   .agent-dropdown-trigger{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:600;padding:5px 26px 5px 9px;cursor:pointer;display:flex;align-items:center;gap:6px;width:100%;transition:border-color 0.2s;position:relative;}
+  .agent-row.active-row{box-shadow:0 0 0 2px var(--accent) inset;}
   .agent-dropdown-trigger::after{content:'';position:absolute;right:9px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--muted);pointer-events:none;}
   .agent-dropdown-trigger:hover{border-color:var(--accent);}
   .agent-dropdown-menu{position:absolute;top:calc(100% + 4px);left:0;width:220px;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:1000;box-shadow:0 8px 24px rgba(0,0,0,0.4);overflow:hidden;display:none;}
@@ -119,7 +120,10 @@
   .legend-item{display:flex;align-items:center;gap:5px;}
   .legend-dot{width:10px;height:10px;border-radius:3px;}
   .avail-grid{display:flex;flex-wrap:wrap;gap:4px;}
-  .avail-slot{font-family:'DM Mono',monospace;font-size:14px;padding:4px 7px;border-radius:5px;border:1px solid transparent;cursor:default;white-space:nowrap;transition:opacity 0.2s;}
+  .avail-slot{font-family:'DM Mono',monospace;font-size:14px;padding:4px 7px;border-radius:5px;border:1px solid transparent;cursor:default;white-space:nowrap;transition:all 0.15s;}
+  .avail-slot.clickable{cursor:pointer;}
+  .avail-slot.clickable:hover{transform:scale(1.08);filter:brightness(1.3);}
+  .avail-slot.selected-from{outline:2px solid var(--accent);outline-offset:2px;}
   .avail-free{background:rgba(34,197,94,0.13);border-color:rgba(34,197,94,0.28);color:var(--done);}
   .avail-one{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.28);color:var(--warning);}
   .avail-full{background:rgba(255,107,53,0.10);border-color:rgba(255,107,53,0.22);color:rgba(255,107,53,0.6);text-decoration:line-through;}
@@ -476,16 +480,94 @@ function renderAvailableSlots(){
     else if(count>=2) cls+='avail-full';
     else if(count===1) cls+='avail-one';
     else cls+='avail-free';
+    var isClickable=!past&&count<2;
+    var isPendingFrom=pendingFrom&&pendingFrom.time===t;
+    if(isClickable)cls+=' clickable';
+    if(isPendingFrom)cls+=' selected-from';
     if(isNow) cls+=' avail-now-marker';
     var badge=(!past&&count>0)?'<span class="avail-count">'+count+'/2</span>':'';
     var div=document.createElement('div');
     div.className=cls;
-    div.title=t+' — '+count+' of 2 slots taken';
+    div.title=isClickable?(pendingFrom?'Click to set end time to '+t:'Click to set break start to '+t):t+' — full';
     div.innerHTML=t+badge;
+    if(isClickable)div.onclick=function(time){return function(){clickAvailSlot(time);};}(t);
     grid.appendChild(div);
   });
 }
 
+
+// Track pending from-time click state: {ri, si, time}
+var pendingFrom=null;
+var activeRow=-1; // which row the current user is working on
+
+function setActiveRow(ri){
+  activeRow=ri;
+  pendingFrom=null;
+  // Update visual highlight
+  document.querySelectorAll('.agent-row').forEach(function(el,i){
+    el.classList.toggle('active-row', i===ri);
+  });
+  renderAvailableSlots();
+}
+
+function clickAvailSlot(t){
+  if(activeRow<0||rows[activeRow].agentIdx<0){
+    var grid=document.getElementById('avail-grid');
+    if(grid){grid.style.outline='2px solid var(--warning)';setTimeout(function(){grid.style.outline='';},800);}
+    return;
+  }
+
+  if(pendingFrom){
+    var ri=pendingFrom.ri,si=pendingFrom.si;
+    var fromM=toMins(pendingFrom.time),toM=toMins(t);
+    if(toM<=fromM)toM+=1440;
+    var dur=toM-fromM;
+    // Validate duration and overlap (same rules as commitTime)
+    var otherMins=rows[ri].slots.reduce(function(a,s,idx){return idx!==si?a+slotDur(s):a;},0);
+    var budget=Math.max(0,MAX_BREAK-otherMins);
+    if(dur<=0||dur>budget||wouldCauseOverlap(ri,si,fromM,toM)){
+      pendingFrom=null;
+      rows[ri].slots[si].from='';
+      var fwrap=document.getElementById('fw-'+ri+'-'+si);
+      if(fwrap){var segs=fwrap.querySelectorAll('.time-seg');segs[0].value='';segs[1].value='';}
+      pushRows();render();renderAvailableSlots();
+      return;
+    }
+    rows[ri].slots[si].to=t;
+    var twrap=document.getElementById('tw-'+ri+'-'+si);
+    if(twrap){
+      var segs=twrap.querySelectorAll('.time-seg');
+      var parts=t.split(':');
+      if(segs[0])segs[0].value=parts[0];
+      if(segs[1])segs[1].value=parts[1];
+    }
+    pendingFrom=null;
+    pushRows();render();
+    return;
+  }
+
+  // First click = FROM
+  var ri=activeRow,targetSi=-1;
+  for(var si=0;si<rows[ri].slots.length;si++){
+    if(!rows[ri].slots[si].from&&!rows[ri].slots[si].to){targetSi=si;break;}
+  }
+  if(targetSi<0)return;
+
+  rows[ri].slots[targetSi].from=t;
+  rows[ri].slots[targetSi].to='';
+  var fwrap=document.getElementById('fw-'+ri+'-'+targetSi);
+  if(fwrap){
+    var segs=fwrap.querySelectorAll('.time-seg');
+    var parts=t.split(':');
+    if(segs[0])segs[0].value=parts[0];
+    if(segs[1])segs[1].value=parts[1];
+  }
+  var twrap=document.getElementById('tw-'+ri+'-'+targetSi);
+  if(twrap){var segs=twrap.querySelectorAll('.time-seg');segs[0].value='';segs[1].value='';}
+  pendingFrom={ri:ri,si:targetSi,time:t};
+  pushRows();render();
+  renderAvailableSlots();
+}
 
 // ═══════════════════════════════════════════════════════════════
 function render(){
@@ -501,9 +583,9 @@ function render(){
     var anyBreak=row.agentIdx>=0&&row.slots.some(function(s){return slotStatus(s)==='break';});
     var allFinished=row.agentIdx>=0&&rowFinished(row);
     var wrap=document.createElement('div');
-    wrap.className='agent-row'+(anyBreak?' any-on-break':(allFinished&&!anyBreak?' full-done':''));
+    wrap.className='agent-row'+(anyBreak?' any-on-break':(allFinished&&!anyBreak?' full-done':''))+(ri===activeRow?' active-row':'');
     wrap.innerHTML=
-      '<div class="agent-header">'+
+      '<div class="agent-header" onclick="setActiveRow('+ri+')" style="cursor:pointer;" title="Click to select this row for break slot filling">'+
         '<span class="agent-row-num">'+(ri+1)+'</span>'+
         '<div class="agent-dropdown" id="dd-'+ri+'">'+
           '<div class="agent-dropdown-trigger" onclick="toggleDropdown('+ri+')">'+
@@ -839,9 +921,6 @@ updateClock();
 
 // ── GO! ──
 initApp();
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
